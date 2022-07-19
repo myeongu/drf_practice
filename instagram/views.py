@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.decorators import api_view, action
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -62,3 +64,17 @@ class PostViewSet(ModelViewSet):
 # def post_detail(request, pk):
 #     # request.method => 3개 분기
 #     pass
+
+
+class PostDetailAPIView(RetrieveAPIView):
+    queryset = Post.objects.all()
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = "instagram/post_detail.html"
+
+    def get(self, request, *args, **kwargs):
+        post = self.get_object()
+        return Response(
+            {
+                "post": post,
+            }
+        )
