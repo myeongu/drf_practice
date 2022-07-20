@@ -1,11 +1,15 @@
 from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.decorators import api_view, action
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import RetrieveAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+
+from .permissions import IsAuthorOrReadonly
 from .serializers import PostSerializer
 from .models import Post
 
@@ -34,6 +38,19 @@ def public_post_list(request):
 class PostViewSet(ModelViewSet):
     queryset = Post.objects.all()  # data 범위 지정(all, filter, ...)
     serializer_class = PostSerializer
+    # authentication_classes = []  # 인증이 됨을 보장받을 수 있음!
+    permission_classes = [IsAuthenticated, IsAuthorOrReadonly]
+
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["message"]
+
+    def perform_create(self, serializer):
+        author = self.request.user  # User or AnonymousUser
+        ip = self.request.META["REMOTE_ADDR"]
+        serializer.save(
+            ip=ip,
+            author=author,
+        )
 
     @action(detail=False, methods=["GET"])
     def public(self, request):
